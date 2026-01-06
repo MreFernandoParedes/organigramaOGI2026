@@ -1,419 +1,657 @@
+```html
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Organigrama interactivo OGI</title>
+  <title>Organigrama interactivo — OGI</title>
+
   <style>
     :root{
       --c-ogi:#0b4f8a;
       --c-oas:#1f7a3a;
       --c-oia:#d86a00;
       --c-gda:#5b3f93;
-      --c-line:#9aa3ad;
+
       --bg:#f6f8fb;
       --card:#ffffff;
       --text:#1b2430;
+      --muted:#4b5563;
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
+      --border: #e6eaf0;
+
+      --max-card: 360px;
     }
 
-    body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); margin:0; padding:24px;}
-    .wrap{max-width:1200px; margin:0 auto;}
-    h1{font-size:18px; margin:0 0 10px; color:var(--text);}
-    .hint{font-size:13px; color:#4b5563; margin:0 0 18px;}
+    *{ box-sizing:border-box; }
 
-    /* =========================
-       ESTRUCTURA DEL ORGANIGRAMA
-       (IMPORTANTE: solo esto usa flex)
-    ========================= */
-    .org, .org ul{padding:0; margin:0; list-style:none;}
-    .org{display:flex; justify-content:center;}
-    .org > li{position:relative;}
-
-    /* Top: oficinas (3 columnas) */
-    .org > li > ul.offices{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(300px, 360px));
-      gap:24px;
-      justify-content:center;
-      align-items:start; /* ✅ alinea arriba */
-      padding-top:26px;
-      position:relative;
-      overflow-x:auto;     /* ✅ si falta espacio, scroll horizontal */
-      padding-bottom:10px;
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 22px;
+      color: var(--text);
     }
 
-    /* Línea horizontal superior */
-    .org > li > ul.offices::before{
-      content:"";
-      position:absolute;
-      top:10px;
-      left:50%;
-      transform:translateX(-50%);
-      width:calc(100% - 90px);
-      height:2px;
-      background:var(--c-line);
-      border-radius:2px;
-    }
+    .wrap{ max-width: 1200px; margin: 0 auto; }
 
-    /* Línea vertical desde OGI hacia las oficinas */
-    .org > li > ul.offices > li{
-      position:relative;
-      padding-top:0;
-    }
-    .org > li > ul.offices > li::before{
-      content:"";
-      position:absolute;
-      top:-16px;
-      left:50%;
-      transform:translateX(-50%);
-      width:2px;
-      height:16px;
-      background:var(--c-line);
-    }
-
-
-/* ✅ Centra OGI (y todo lo que cuelga de él) */
-.org > li{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-/* ✅ Asegura que el botón OGI quede centrado aunque el contenedor sea ancho */
-.node-btn.ogi{
-  margin-left:auto;
-  margin-right:auto;
-}
-
-
-
-
-
-    /* Sub-ramas (unidades) */
-    .branch{
-      position:relative;
+    header h1{
+      margin: 0 0 6px;
+      font-size: 18px;
       display:flex;
-      justify-content:center;
-      margin-top:10px;
-    }
-    .branch::before{
-      content:"";
-      position:absolute;
-      top:-10px;
-      left:50%;
-      transform:translateX(-50%);
-      width:2px;
-      height:10px;
-      background:var(--c-line);
-    }
-    .branch > ul.units{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
+      gap:8px;
       align-items:center;
     }
+    header p{
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+    }
 
-    /* =========================
-       NODOS / BOTONES
-    ========================= */
-    .node-btn{
-      border:0;
-      cursor:pointer;
-      width:100%;
-      max-width:360px;        /* ✅ ancho máximo para que no “explote” */
-      min-height:52px;
+    /* =========
+       NODOS
+    ========= */
+    .node{
+      width: 100%;
+      max-width: var(--max-card);
+      border: 0;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #fff;
+      font-weight: 800;
+      line-height: 1.25;
+      box-shadow: 0 8px 18px rgba(0,0,0,.10);
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:10px;
-      padding:14px 16px;
-      border-radius:12px;
-      color:#fff;
-      font-weight:800;
+      gap: 10px;
       text-align:center;
-      line-height:1.25;
-      box-shadow:0 8px 18px rgba(0,0,0,.10);
-      transition:transform .06s ease, filter .15s ease;
-      word-break:normal;
       overflow-wrap:anywhere;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .node-btn:active{transform:translateY(1px);}
-    .node-btn:focus{outline:3px solid rgba(59,130,246,.35); outline-offset:2px;}
 
-    .badge{
-      width:22px; height:22px;
-      border-radius:999px;
-      background:rgba(255,255,255,.22);
+    .node:active{ transform: translateY(1px); }
+    .node:focus{ outline: 3px solid rgba(59,130,246,.35); outline-offset: 2px; }
+
+    .node .badge{
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
       display:grid;
       place-items:center;
-      font-weight:900;
-      line-height:1;
-      flex:0 0 auto;
+      font-weight: 900;
+      flex: 0 0 auto;
     }
 
-    .sub-btn{
-      max-width:320px;       /* ✅ subcajas más compactas */
-      padding:10px 12px;
-      font-weight:800;
-      box-shadow:0 8px 18px rgba(0,0,0,.08);
+    .ogi{ background: var(--c-ogi); }
+    .oas{ background: var(--c-oas); }
+    .oia{ background: var(--c-oia); }
+    .gda{ background: var(--c-gda); }
+
+    .sub{
+      max-width: 320px;
+      padding: 10px 12px;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(0,0,0,.08);
     }
 
-    /* Colores */
-    .ogi{background:var(--c-ogi);}
-    .oas{background:var(--c-oas);}
-    .oia{background:var(--c-oia);}
-    .gda{background:var(--c-gda);}
-
-    /* =========================
+    /* =========
        PANELES (FUNCIONES)
-       (IMPORTANTE: listas con bullets, NO flex)
-    ========================= */
+    ========= */
     .panel{
-      margin:10px auto 0;
-      width:100%;
-      max-width:360px;        /* ✅ mismo ancho que la caja */
-      background:var(--card);
-      border-radius:12px;
-      padding:12px 14px;
-      box-shadow:0 10px 22px rgba(0,0,0,.07);
-      border:1px solid #e6eaf0;
-      color:var(--text);
+      width: 100%;
+      max-width: var(--max-card);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      margin: 10px auto 0;
       text-align:left;
     }
+
     .panel h3{
-      margin:0 0 10px;
-      font-size:13px;
-      color:#334155;
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #334155;
       display:flex;
       align-items:center;
-      gap:8px;
+      gap: 8px;
     }
 
-    /* ✅ Bullets normales */
     .panel ul{
-      margin:0;
-      padding-left:18px;
+      margin: 0;
+      padding-left: 18px;
       display:block;
     }
     .panel li{
-      margin:8px 0;
-      font-size:13px;
-      line-height:1.35;
-      color:#263142;
+      margin: 8px 0;
+      font-size: 13px;
+      line-height: 1.35;
+      color: #263142;
     }
-    .hidden{display:none !important;}
 
-    /* =========================
-       RESPONSIVE
-    ========================= */
+    .hidden{ display:none !important; }
+
+    /* =========
+       LAYOUT GENERAL
+    ========= */
+    .center{ display:flex; flex-direction:column; align-items:center; }
+
+    /* Desktop: 3 columnas */
+    .offices-grid{
+      width:100%;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(300px, var(--max-card)));
+      justify-content:center;
+      gap: 24px;
+      margin-top: 18px;
+      padding-top: 14px;
+    }
+
+    /* ========
+       MÓVIL: CARRUSEL REAL (SIN SNAP)
+       - Aquí solucionamos el “se corta a la izquierda”:
+         usamos transform:translateX(-index*100%)
+         en vez de scroll.
+    ======== */
+    .carousel{
+      display:none;
+      width:100%;
+      margin-top: 18px;
+    }
+
+    .carousel-viewport{
+      width:100%;
+      overflow:hidden;          /* ✅ nada se corta fuera */
+      border-radius: 16px;
+    }
+
+    .carousel-track{
+      display:flex;
+      width:100%;
+      transition: transform .28s ease;
+      will-change: transform;
+    }
+
+    .slide{
+      flex: 0 0 100%;           /* ✅ cada slide ocupa 100% del viewport */
+      padding: 0 10px;          /* ✅ margen interno para que no pegue a los bordes */
+      display:flex;
+      justify-content:center;   /* ✅ siempre centrado */
+      align-items:flex-start;
+    }
+
+    /* puntitos */
+    .dots{
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 0;
+      background:#cfd6e2;
+      opacity:.9;
+      cursor:pointer;
+    }
+    .dot.active{
+      background:#1b2430;
+      opacity:1;
+    }
+
+    /* Mostrar carrusel en pantallas estrechas */
+    @media (max-width: 900px){
+      .offices-grid{ display:none; }
+      .carousel{ display:block; }
+    }
 
 
-/* ✅ Mantener 3 oficinas en una sola fila siempre (con scroll si falta espacio) */
-@media (max-width: 99999px){
-  .org > li > ul.offices{
-    grid-template-columns: repeat(3, minmax(300px, 360px));
+
+
+
+/* =========================
+   LÍNEAS (DESKTOP)
+========================= */
+.offices-grid{
+  position: relative;
+  padding-top: 26px; /* espacio para la línea */
+}
+
+/* Línea horizontal bajo OGI */
+.offices-grid::before{
+  content:"";
+  position:absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(980px, calc(100% - 80px));
+  height: 2px;
+  background: #9aa3ad;
+  border-radius: 2px;
+}
+
+/* Línea vertical hacia cada oficina */
+.office{
+  position: relative;
+}
+.office::before{
+  content:"";
+  position:absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 16px;
+  background: #9aa3ad;
+}
+
+/* Línea vertical entre oficina y su bloque de unidades */
+.units-stack{
+  position: relative;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.units-stack::before{
+  content:"";
+  position:absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 12px;
+  background: #9aa3ad;
+}
+
+/* =========================
+   LÍNEAS (MÓVIL / CARRUSEL)
+   (como se ve una oficina a la vez, dejamos una línea vertical centrada)
+========================= */
+@media (max-width: 900px){
+  .carousel{
+    position: relative;
+    padding-top: 18px;
+  }
+
+  /* Línea vertical desde debajo del OGI hacia la oficina visible */
+  .carousel::before{
+    content:"";
+    position:absolute;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 18px;
+    background: #9aa3ad;
+  }
+
+  /* Línea vertical dentro del slide hacia unidades */
+  .slide .units-stack{
+    padding-top: 12px;
+    margin-top: 12px;
+  }
+  .slide .units-stack::before{
+    content:"";
+    position:absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 12px;
+    background: #9aa3ad;
   }
 }
 
-/* ✅ En móvil: quitamos la línea superior, pero mantenemos fila con scroll */
-@media (max-width: 720px){
-  .org > li > ul.offices::before{display:none;}
-  .org > li > ul.offices > li::before{display:none;}
-  .node-btn, .panel{max-width: min(92vw, 420px);}
-  .sub-btn{max-width: min(92vw, 420px);}
-}
 
 
 
 
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <h1>🧩 Organigrama interactivo — OGI</h1>
-    <p class="hint">🖱️ Clic en una oficina o unidad para mostrar/ocultar funciones.</p>
+    <header>
+      <h1>🧩 Organigrama interactivo — OGI</h1>
+      <p>🖱️ Clic en una oficina o unidad para mostrar/ocultar funciones.</p>
+    </header>
 
-    <ul class="org">
-      <li>
-        <!-- OGI -->
-        <button class="node-btn ogi toggle" data-target="fx-ogi" aria-expanded="false" aria-controls="fx-ogi">
+    <div class="center">
+      <!-- OGI -->
+      <button class="node ogi toggle" data-target="fx-ogi" aria-expanded="false" aria-controls="fx-ogi">
+        <span class="badge">+</span>
+        Oficina General de Transformación Digital Institucional (OGI)
+      </button>
+      <div id="fx-ogi" class="panel hidden" role="region" aria-label="Funciones OGI">
+        <h3>📌 Funciones</h3>
+        <ul>
+          <li>Coordina la implementación del ROF en lo correspondiente a transformación digital institucional.</li>
+          <li>Conduce y articula el trabajo de OAS, OIA y GDA.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ========= DESKTOP: GRID ========= -->
+    <section class="offices-grid" aria-label="Oficinas (vista escritorio)">
+      <!-- OAS -->
+      <div class="office">
+        <button class="node oas toggle" data-target="fx-oas" aria-expanded="false" aria-controls="fx-oas">
           <span class="badge">+</span>
-          Oficina General de Transformación Digital Institucional (OGI)
+          Oficina de Arquitectura y Seguridad Digital (OAS)
         </button>
-        <div id="fx-ogi" class="panel hidden" role="region" aria-label="Funciones OGI">
-          <h3>📌 Funciones</h3>
+
+        <div id="fx-oas" class="panel hidden" role="region" aria-label="Funciones OAS">
+          <h3>🛡️ Funciones / servicios</h3>
           <ul>
-            <li>Coordina la implementación del ROF en lo correspondiente a transformación digital institucional.</li>
-            <li>Conduce y articula el trabajo de OAS, OIA y GDA.</li>
+            <li>Soporte técnico y mesa de servicios informático.</li>
+            <li>Cuentas de acceso a red, correo y plataforma colaborativa.</li>
+            <li>Equipos de cómputo y almacenamiento (discos/memorias).</li>
+            <li>Licenciamiento de software.</li>
+            <li>Equipamiento multimedia para reuniones (cámaras, video, audio).</li>
+            <li>Impresoras/plotters y escáneres.</li>
+            <li>Sistema de Gestión de Seguridad de la Información y ciberseguridad.</li>
+            <li>Telefonía fija y móvil corporativa.</li>
+            <li>Internet corporativo y enlaces de telecomunicaciones.</li>
+            <li>Firewalls, antispam, detección y respuesta, antimalware.</li>
+            <li>Servidores para aplicaciones y almacenamiento.</li>
+            <li>Equipos para redes de datos, central telefónica.</li>
+            <li>Cableado estructurado y fibra óptica; centro de datos.</li>
+            <li>Otros dentro de sus competencias.</li>
           </ul>
         </div>
 
-        <!-- Oficinas (ordenado y alineado) -->
-        <ul class="offices">
-          <!-- OAS -->
-          <li>
-            <button class="node-btn oas toggle" data-target="fx-oas" aria-expanded="false" aria-controls="fx-oas">
-              <span class="badge">+</span>
-              Oficina de Arquitectura y Seguridad Digital (OAS)
-            </button>
-            <div id="fx-oas" class="panel hidden" role="region" aria-label="Funciones OAS">
-              <h3>🛡️ Funciones / servicios</h3>
-              <ul>
-                <li>Soporte técnico y mesa de servicios informático.</li>
-                <li>Cuentas de acceso a red, correo y plataforma colaborativa.</li>
-                <li>Equipos de cómputo y almacenamiento (discos/memorias).</li>
-                <li>Licenciamiento de software.</li>
-                <li>Equipamiento multimedia para reuniones (cámaras, video, audio).</li>
-                <li>Impresoras/plotters y escáneres.</li>
-                <li>Sistema de Gestión de Seguridad de la Información y ciberseguridad.</li>
-                <li>Telefonía fija y móvil corporativa.</li>
-                <li>Internet corporativo y enlaces de telecomunicaciones.</li>
-                <li>Firewalls, antispam, detección y respuesta, antimalware.</li>
-                <li>Servidores para aplicaciones y almacenamiento.</li>
-                <li>Equipos para redes de datos, central telefónica.</li>
-                <li>Cableado estructurado y fibra óptica; centro de datos.</li>
-                <li>Otros dentro de sus competencias.</li>
-              </ul>
+        <div class="center units-stack" style="margin-top:10px;">
+
+
+
+          <button class="node sub oas toggle" data-target="fx-rit" aria-expanded="false" aria-controls="fx-rit">
+            <span class="badge">+</span>
+            Unidad Funcional de Redes e Infraestructura Tecnológica (RIT)
+          </button>
+          <div id="fx-rit" class="panel hidden" role="region" aria-label="Funciones RIT">
+            <h3>🌐 Funciones</h3>
+            <ul>
+              <li>Redes de datos y telecomunicaciones.</li>
+              <li>Infraestructura: cableado, fibra óptica y equipos de red.</li>
+              <li>Servidores, almacenamiento y soporte a centro de datos.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- OIA -->
+      <div class="office">
+        <button class="node oia toggle" data-target="fx-oia" aria-expanded="false" aria-controls="fx-oia">
+          <span class="badge">+</span>
+          Oficina de Servicios Digitales, Innovación Digital e Inteligencia Artificial (OIA)
+        </button>
+
+        <div id="fx-oia" class="panel hidden" role="region" aria-label="Funciones OIA">
+          <h3>🤖 Funciones / servicios</h3>
+          <ul>
+            <li>Gobierno y Transformación Digital de la institución.</li>
+            <li>Implementación de Gobierno de Datos.</li>
+            <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
+            <li>Gestión de proyectos de desarrollo de sistemas.</li>
+            <li>Gestión de proyectos de servicios digitales e innovación digital.</li>
+            <li>Implementación de Inteligencia Artificial.</li>
+            <li>Metodología y estándares de desarrollo de sistemas.</li>
+            <li>Otros dentro de sus competencias.</li>
+          </ul>
+        </div>
+
+        <div class="center" style="margin-top:10px;">
+          <button class="node sub oia toggle" data-target="fx-sis" aria-expanded="false" aria-controls="fx-sis">
+            <span class="badge">+</span>
+            Unidad Funcional de Desarrollo de Sistemas (SIS)
+          </button>
+          <div id="fx-sis" class="panel hidden" role="region" aria-label="Funciones SIS">
+            <h3>🧩 Funciones</h3>
+            <ul>
+              <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
+              <li>Aplicación de metodología y estándares de desarrollo.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- GDA -->
+      <div class="office">
+        <button class="node gda toggle" data-target="fx-gda" aria-expanded="false" aria-controls="fx-gda">
+          <span class="badge">+</span>
+          Oficina de Gestión Documental y Archivo (GDA)
+        </button>
+
+        <div id="fx-gda" class="panel hidden" role="region" aria-label="Funciones GDA">
+          <h3>🗂️ Funciones / servicios</h3>
+          <ul>
+            <li>Gestión de documentación del MRE.</li>
+            <li>Conservación de documentación emitida y recibida.</li>
+            <li>Acervo documental institucional y bibliográfico.</li>
+            <li>Administración del Sistema de Gestión de las Comunicaciones.</li>
+            <li>Mesa de partes institucional.</li>
+            <li>Gestión de la valija diplomática.</li>
+            <li>Traducciones no oficiales.</li>
+            <li>Otros dentro de sus competencias.</li>
+          </ul>
+        </div>
+
+        <div class="center" style="margin-top:10px;">
+          <button class="node sub gda toggle" data-target="fx-acg" aria-expanded="false" aria-controls="fx-acg">
+            <span class="badge">+</span>
+            Unidad Funcional de Archivo Central y de Gestión (ACG)
+          </button>
+          <div id="fx-acg" class="panel hidden" role="region" aria-label="Funciones ACG">
+            <h3>📚 Funciones</h3>
+            <ul>
+              <li>Archivo central y conservación/gestión del acervo documental (según competencias).</li>
+            </ul>
+          </div>
+
+          <button class="node sub gda toggle" data-target="fx-gvd" aria-expanded="false" aria-controls="fx-gvd" style="margin-top:14px;">
+            <span class="badge">+</span>
+            Unidad Funcional de Gestión Documental y Valija Diplomática (GVD)
+          </button>
+          <div id="fx-gvd" class="panel hidden" role="region" aria-label="Funciones GVD">
+            <h3>📦 Funciones</h3>
+            <ul>
+              <li>Gestión documental institucional.</li>
+              <li>Gestión de la valija diplomática.</li>
+              <li>Soporte a mesa de partes/comunicaciones, según competencias.</li>
+            </ul>
+          </div>
+
+          <button class="node sub gda toggle" data-target="fx-utd" aria-expanded="false" aria-controls="fx-utd" style="margin-top:14px;">
+            <span class="badge">+</span>
+            Unidad Funcional de Traducciones (UTD)
+          </button>
+          <div id="fx-utd" class="panel hidden" role="region" aria-label="Funciones UTD">
+            <h3>📝 Funciones</h3>
+            <ul>
+              <li>Traducciones no oficiales, dentro del marco de competencias.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= MÓVIL: CARRUSEL (sin scroll, sin cortes) ========= -->
+    <section class="carousel" aria-label="Oficinas (vista móvil)">
+      <div class="carousel-viewport">
+        <div class="carousel-track" id="track">
+          <!-- Slide 0: OAS -->
+          <div class="slide">
+            <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+              <button class="node oas toggle" data-target="m-fx-oas" aria-expanded="false" aria-controls="m-fx-oas">
+                <span class="badge">+</span>
+                Oficina de Arquitectura y Seguridad Digital (OAS)
+              </button>
+
+              <div id="m-fx-oas" class="panel hidden" role="region" aria-label="Funciones OAS">
+                <h3>🛡️ Funciones / servicios</h3>
+                <ul>
+                  <li>Soporte técnico y mesa de servicios informático.</li>
+                  <li>Cuentas de acceso a red, correo y plataforma colaborativa.</li>
+                  <li>Equipos de cómputo y almacenamiento (discos/memorias).</li>
+                  <li>Licenciamiento de software.</li>
+                  <li>Equipamiento multimedia para reuniones (cámaras, video, audio).</li>
+                  <li>Impresoras/plotters y escáneres.</li>
+                  <li>Sistema de Gestión de Seguridad de la Información y ciberseguridad.</li>
+                  <li>Telefonía fija y móvil corporativa.</li>
+                  <li>Internet corporativo y enlaces de telecomunicaciones.</li>
+                  <li>Firewalls, antispam, detección y respuesta, antimalware.</li>
+                  <li>Servidores para aplicaciones y almacenamiento.</li>
+                  <li>Equipos para redes de datos, central telefónica.</li>
+                  <li>Cableado estructurado y fibra óptica; centro de datos.</li>
+                  <li>Otros dentro de sus competencias.</li>
+                </ul>
+              </div>
+
+              <div class="center" style="margin-top:10px;">
+                <button class="node sub oas toggle" data-target="m-fx-rit" aria-expanded="false" aria-controls="m-fx-rit">
+                  <span class="badge">+</span>
+                  Unidad Funcional de Redes e Infraestructura Tecnológica (RIT)
+                </button>
+                <div id="m-fx-rit" class="panel hidden" role="region" aria-label="Funciones RIT">
+                  <h3>🌐 Funciones</h3>
+                  <ul>
+                    <li>Redes de datos y telecomunicaciones.</li>
+                    <li>Infraestructura: cableado, fibra óptica y equipos de red.</li>
+                    <li>Servidores, almacenamiento y soporte a centro de datos.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div class="branch">
-              <ul class="units">
-                <li>
-                  <button class="node-btn sub-btn oas toggle" data-target="fx-rit" aria-expanded="false" aria-controls="fx-rit">
-                    <span class="badge">+</span>
-                    Unidad Funcional de Redes e Infraestructura Tecnológica (RIT)
-                  </button>
-                  <div id="fx-rit" class="panel hidden" role="region" aria-label="Funciones RIT">
-                    <h3>🌐 Funciones</h3>
-                    <ul>
-                      <li>Redes de datos y telecomunicaciones.</li>
-                      <li>Infraestructura: cableado, fibra óptica y equipos de red.</li>
-                      <li>Servidores, almacenamiento y soporte a centro de datos.</li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
+          <!-- Slide 1: OIA -->
+          <div class="slide">
+            <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+              <button class="node oia toggle" data-target="m-fx-oia" aria-expanded="false" aria-controls="m-fx-oia">
+                <span class="badge">+</span>
+                Oficina de Servicios Digitales, Innovación Digital e Inteligencia Artificial (OIA)
+              </button>
+
+              <div id="m-fx-oia" class="panel hidden" role="region" aria-label="Funciones OIA">
+                <h3>🤖 Funciones / servicios</h3>
+                <ul>
+                  <li>Gobierno y Transformación Digital de la institución.</li>
+                  <li>Implementación de Gobierno de Datos.</li>
+                  <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
+                  <li>Gestión de proyectos de desarrollo de sistemas.</li>
+                  <li>Gestión de proyectos de servicios digitales e innovación digital.</li>
+                  <li>Implementación de Inteligencia Artificial.</li>
+                  <li>Metodología y estándares de desarrollo de sistemas.</li>
+                  <li>Otros dentro de sus competencias.</li>
+                </ul>
+              </div>
+
+              <div class="center" style="margin-top:10px;">
+                <button class="node sub oia toggle" data-target="m-fx-sis" aria-expanded="false" aria-controls="m-fx-sis">
+                  <span class="badge">+</span>
+                  Unidad Funcional de Desarrollo de Sistemas (SIS)
+                </button>
+                <div id="m-fx-sis" class="panel hidden" role="region" aria-label="Funciones SIS">
+                  <h3>🧩 Funciones</h3>
+                  <ul>
+                    <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
+                    <li>Aplicación de metodología y estándares de desarrollo.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
-          </li>
+          </div>
 
-          <!-- OIA -->
-          <li>
-            <button class="node-btn oia toggle" data-target="fx-oia" aria-expanded="false" aria-controls="fx-oia">
-              <span class="badge">+</span>
-              Oficina de Servicios Digitales, Innovación Digital e Inteligencia Artificial (OIA)
-            </button>
-            <div id="fx-oia" class="panel hidden" role="region" aria-label="Funciones OIA">
-              <h3>🤖 Funciones / servicios</h3>
-              <ul>
-                <li>Gobierno y Transformación Digital de la institución.</li>
-                <li>Implementación de Gobierno de Datos.</li>
-                <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
-                <li>Gestión de proyectos de desarrollo de sistemas.</li>
-                <li>Gestión de proyectos de servicios digitales e innovación digital.</li>
-                <li>Implementación de Inteligencia Artificial.</li>
-                <li>Metodología y estándares de desarrollo de sistemas.</li>
-                <li>Otros dentro de sus competencias.</li>
-              </ul>
+          <!-- Slide 2: GDA -->
+          <div class="slide">
+            <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+              <button class="node gda toggle" data-target="m-fx-gda" aria-expanded="false" aria-controls="m-fx-gda">
+                <span class="badge">+</span>
+                Oficina de Gestión Documental y Archivo (GDA)
+              </button>
+
+              <div id="m-fx-gda" class="panel hidden" role="region" aria-label="Funciones GDA">
+                <h3>🗂️ Funciones / servicios</h3>
+                <ul>
+                  <li>Gestión de documentación del MRE.</li>
+                  <li>Conservación de documentación emitida y recibida.</li>
+                  <li>Acervo documental institucional y bibliográfico.</li>
+                  <li>Administración del Sistema de Gestión de las Comunicaciones.</li>
+                  <li>Mesa de partes institucional.</li>
+                  <li>Gestión de la valija diplomática.</li>
+                  <li>Traducciones no oficiales.</li>
+                  <li>Otros dentro de sus competencias.</li>
+                </ul>
+              </div>
+
+              <div class="center" style="margin-top:10px;">
+                <button class="node sub gda toggle" data-target="m-fx-acg" aria-expanded="false" aria-controls="m-fx-acg">
+                  <span class="badge">+</span>
+                  Unidad Funcional de Archivo Central y de Gestión (ACG)
+                </button>
+                <div id="m-fx-acg" class="panel hidden" role="region" aria-label="Funciones ACG">
+                  <h3>📚 Funciones</h3>
+                  <ul>
+                    <li>Archivo central y conservación/gestión del acervo documental (según competencias).</li>
+                  </ul>
+                </div>
+
+                <button class="node sub gda toggle" data-target="m-fx-gvd" aria-expanded="false" aria-controls="m-fx-gvd" style="margin-top:14px;">
+                  <span class="badge">+</span>
+                  Unidad Funcional de Gestión Documental y Valija Diplomática (GVD)
+                </button>
+                <div id="m-fx-gvd" class="panel hidden" role="region" aria-label="Funciones GVD">
+                  <h3>📦 Funciones</h3>
+                  <ul>
+                    <li>Gestión documental institucional.</li>
+                    <li>Gestión de la valija diplomática.</li>
+                    <li>Soporte a mesa de partes/comunicaciones, según competencias.</li>
+                  </ul>
+                </div>
+
+                <button class="node sub gda toggle" data-target="m-fx-utd" aria-expanded="false" aria-controls="m-fx-utd" style="margin-top:14px;">
+                  <span class="badge">+</span>
+                  Unidad Funcional de Traducciones (UTD)
+                </button>
+                <div id="m-fx-utd" class="panel hidden" role="region" aria-label="Funciones UTD">
+                  <h3>📝 Funciones</h3>
+                  <ul>
+                    <li>Traducciones no oficiales, dentro del marco de competencias.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div class="branch">
-              <ul class="units">
-                <li>
-                  <button class="node-btn sub-btn oia toggle" data-target="fx-sis" aria-expanded="false" aria-controls="fx-sis">
-                    <span class="badge">+</span>
-                    Unidad Funcional de Desarrollo de Sistemas (SIS)
-                  </button>
-                  <div id="fx-sis" class="panel hidden" role="region" aria-label="Funciones SIS">
-                    <h3>🧩 Funciones</h3>
-                    <ul>
-                      <li>Desarrollo y mantenimiento de sistemas informáticos.</li>
-                      <li>Aplicación de metodología y estándares de desarrollo.</li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </li>
+        </div>
+      </div>
 
-          <!-- GDA -->
-          <li>
-            <button class="node-btn gda toggle" data-target="fx-gda" aria-expanded="false" aria-controls="fx-gda">
-              <span class="badge">+</span>
-              Oficina de Gestión Documental y Archivo (GDA)
-            </button>
-            <div id="fx-gda" class="panel hidden" role="region" aria-label="Funciones GDA">
-              <h3>🗂️ Funciones / servicios</h3>
-              <ul>
-                <li>Gestión de documentación del MRE.</li>
-                <li>Conservación de documentación emitida y recibida.</li>
-                <li>Acervo documental institucional y bibliográfico.</li>
-                <li>Administración del Sistema de Gestión de las Comunicaciones.</li>
-                <li>Mesa de partes institucional.</li>
-                <li>Gestión de la valija diplomática.</li>
-                <li>Traducciones no oficiales.</li>
-                <li>Otros dentro de sus competencias.</li>
-              </ul>
-            </div>
-
-            <div class="branch">
-              <ul class="units">
-                <li>
-                  <button class="node-btn sub-btn gda toggle" data-target="fx-acg" aria-expanded="false" aria-controls="fx-acg">
-                    <span class="badge">+</span>
-                    Unidad Funcional de Archivo Central y de Gestión (ACG)
-                  </button>
-                  <div id="fx-acg" class="panel hidden" role="region" aria-label="Funciones ACG">
-                    <h3>📚 Funciones</h3>
-                    <ul>
-                      <li>Archivo central y conservación/gestión del acervo documental (según competencias).</li>
-                    </ul>
-                  </div>
-                </li>
-
-                <li>
-                  <button class="node-btn sub-btn gda toggle" data-target="fx-gvd" aria-expanded="false" aria-controls="fx-gvd">
-                    <span class="badge">+</span>
-                    Unidad Funcional de Gestión Documental y Valija Diplomática (GVD)
-                  </button>
-                  <div id="fx-gvd" class="panel hidden" role="region" aria-label="Funciones GVD">
-                    <h3>📦 Funciones</h3>
-                    <ul>
-                      <li>Gestión documental institucional.</li>
-                      <li>Gestión de la valija diplomática.</li>
-                      <li>Soporte a mesa de partes/comunicaciones, según competencias.</li>
-                    </ul>
-                  </div>
-                </li>
-
-                <li>
-                  <button class="node-btn sub-btn gda toggle" data-target="fx-utd" aria-expanded="false" aria-controls="fx-utd">
-                    <span class="badge">+</span>
-                    Unidad Funcional de Traducciones (UTD)
-                  </button>
-                  <div id="fx-utd" class="panel hidden" role="region" aria-label="Funciones UTD">
-                    <h3>📝 Funciones</h3>
-                    <ul>
-                      <li>Traducciones no oficiales, dentro del marco de competencias.</li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </li>
-        </ul>
-
-      </li>
-    </ul>
+      <div class="dots" aria-label="Indicadores del carrusel">
+        <button class="dot active" type="button" aria-label="Ir a OAS" data-i="0"></button>
+        <button class="dot" type="button" aria-label="Ir a OIA" data-i="1"></button>
+        <button class="dot" type="button" aria-label="Ir a GDA" data-i="2"></button>
+      </div>
+    </section>
   </div>
 
   <script>
-    // Mostrar / ocultar paneles
+    // ======= Expandir / colapsar funciones (desktop + móvil) =======
     document.querySelectorAll(".toggle").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-target");
         const panel = document.getElementById(id);
-        const expanded = btn.getAttribute("aria-expanded") === "true";
+        if (!panel) return;
 
+        const expanded = btn.getAttribute("aria-expanded") === "true";
         btn.setAttribute("aria-expanded", String(!expanded));
         panel.classList.toggle("hidden", expanded);
 
@@ -421,6 +659,75 @@
         if (badge) badge.textContent = expanded ? "+" : "–";
       });
     });
+
+    // ======= Carrusel móvil (sin scroll-snap) =======
+    (function(){
+      const track = document.getElementById("track");
+      const dots = Array.from(document.querySelectorAll(".dots .dot"));
+      if (!track || !dots.length) return;
+
+      let index = 0;
+      let startX = 0;
+      let currentX = 0;
+      let dragging = false;
+
+      function setIndex(i){
+        index = Math.max(0, Math.min(2, i));
+        track.style.transform = `translateX(${-index * 100}%)`;
+        dots.forEach((d, di) => d.classList.toggle("active", di === index));
+      }
+
+      // Puntitos
+      dots.forEach(d => {
+        d.addEventListener("click", () => setIndex(Number(d.dataset.i)));
+      });
+
+      // Swipe (táctil)
+      function onStart(x){
+        if (window.matchMedia("(min-width: 901px)").matches) return;
+        dragging = true;
+        startX = x;
+        currentX = x;
+        track.style.transition = "none";
+      }
+
+      function onMove(x){
+        if (!dragging) return;
+        currentX = x;
+        const dx = currentX - startX;
+        const pct = (dx / track.parentElement.clientWidth) * 100;
+        track.style.transform = `translateX(${(-index * 100) + pct}%)`;
+      }
+
+      function onEnd(){
+        if (!dragging) return;
+        dragging = false;
+        track.style.transition = "transform .28s ease";
+
+        const dx = currentX - startX;
+        const threshold = track.parentElement.clientWidth * 0.18;
+
+        if (dx < -threshold) setIndex(index + 1);
+        else if (dx > threshold) setIndex(index - 1);
+        else setIndex(index);
+      }
+
+      track.addEventListener("touchstart", (e)=> onStart(e.touches[0].clientX), {passive:true});
+      track.addEventListener("touchmove",  (e)=> onMove(e.touches[0].clientX),  {passive:true});
+      track.addEventListener("touchend",   onEnd);
+
+      // Swipe (mouse)
+      track.addEventListener("mousedown", (e)=> { e.preventDefault(); onStart(e.clientX); });
+      window.addEventListener("mousemove", (e)=> onMove(e.clientX));
+      window.addEventListener("mouseup", onEnd);
+
+      // ✅ Siempre iniciar mostrando OAS
+      setIndex(0);
+
+      // Si cambia tamaño (desktop↔móvil), vuelve al inicio
+      window.addEventListener("resize", () => setIndex(0));
+    })();
   </script>
 </body>
 </html>
+```
